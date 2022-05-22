@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/batch"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/usace/wat-api/utils"
 	"github.com/usace/wat-api/wat"
@@ -36,6 +37,11 @@ func main() {
 		return
 	}
 	queue, err := loader.InitQueue()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	awsBatch, err := loader.InitBatch()
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -70,7 +76,32 @@ func main() {
 				fmt.Println("message sent")
 			} else {
 				//default to batch.
-
+				//send task to batch
+				path := "some path in s3, need to send payload to s3"
+				proptags := true
+				batchOutput, err := awsBatch.SubmitJob(&batch.SubmitJobInput{
+					//DependsOn: dependsOn,
+					ContainerOverrides: &batch.ContainerOverrides{
+						Command: []*string{
+							aws.String(".\\main -payload=" + path),
+						},
+					},
+					//JobDefinition:              resources[idx].JobARN, //need to verify this.
+					//JobName:                    &key,
+					//JobQueue:                   resources[idx].QueueARN,
+					Parameters:                 nil,       //parameters?
+					PropagateTags:              &proptags, //i think.
+					RetryStrategy:              nil,
+					SchedulingPriorityOverride: nil,
+					ShareIdentifier:            nil,
+					Tags:                       nil,
+					Timeout:                    nil,
+				})
+				fmt.Println("batchoutput", batchOutput)
+				if err != nil {
+					fmt.Println("batcherror", err)
+					panic(err)
+				}
 			}
 		}
 
