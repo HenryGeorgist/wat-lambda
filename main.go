@@ -12,13 +12,13 @@ import (
 
 func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 	for _, message := range sqsEvent.Records {
-		modelPayload := wat.ModelPayload{} //needs to be a Task from batch branch.
-		err := yaml.Unmarshal([]byte(string(message.Body)), &modelPayload)
+		task := wat.Task{} //needs to be a Task from batch branch.
+		err := yaml.Unmarshal([]byte(string(message.Body)), &task)
 		if err != nil {
 			fmt.Println("error while parsing message body", err)
 		}
 		fmt.Printf("The message %s for event source %s = %s \n", message.MessageId, message.EventSource, message.Body)
-		fmt.Println(modelPayload)
+		fmt.Println("sending task to", task.TaskType)
 	}
 
 	return nil
